@@ -1,2 +1,2 @@
-typeahead-lift-module
-=====================
+lift-example
+============
