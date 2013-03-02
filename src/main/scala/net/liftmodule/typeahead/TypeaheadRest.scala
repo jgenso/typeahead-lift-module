@@ -14,11 +14,11 @@ object TypeaheadRest extends RestHelper {
   serve {
     case "twitter" :: "typeahead" :: "prefetch" :: key :: Nil JsonGet _ => {
       val suggestions = TypeaheadSuggestions.getOrElseNil(key)
-      JArray(suggestions map { JString (_) } )
+      JArray(suggestions map { JString } )
     }
-    case "twitter" :: "typeahead" :: "remote" :: key :: Nil JsonGet _ => {
-      val suggestions = TypeaheadSuggestions.getOrElseNil(key)
-      JArray(suggestions map { JString (_) } )
+    case "twitter" :: "typeahead" :: "remote" :: key :: query :: Nil JsonGet _ => {
+      val suggestions = TypeaheadSuggestions.getOrElseNil(key) filter { _.toLowerCase.startsWith(query) }
+      JArray(suggestions map { JString } )
     }
   }
 }

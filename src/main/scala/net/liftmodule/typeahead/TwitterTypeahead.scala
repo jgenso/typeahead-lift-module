@@ -44,13 +44,13 @@ object TwitterTypeahead {
 
   case class URL(attribute: String, url: String => String)
 
-  private val _url = "/twitter/typeahead/%s/%s"
+  private val _url = "/twitter/typeahead/%s/%s%s"
  
-  private def makeUrl(part: String)(id: String) = _url.format(part, id)
+  private def makeUrl(part: String, query: Box[String])(id: String) = _url.format(part, id, query openOr "")
 
-  private val prefetchUrl = makeUrl("prefetch") _
+  private val prefetchUrl = makeUrl("prefetch", Empty) _
 
-  private val remoteUrl = makeUrl("remote") _ 
+  private val remoteUrl = makeUrl("remote", Full("/%QUERY")) _ 
 
   private def script(id: String, options: JValue) = 
      JsRaw("""
