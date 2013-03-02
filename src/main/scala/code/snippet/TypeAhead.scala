@@ -11,11 +11,12 @@ import util._
 import Helpers._
 import scala.xml._
 
+import net.liftmodules.typeahead.{TwitterTypeahead}
+
 class TypeAhead {
 
   def render = {
-    "@typeahead *" #> TwitterTypeahead.local("rocks", List("red rocks", "blue rocks", "green rocks"), Empty, (s:
-    String) => { println(s); Noop })
+    "@typeahead *" #> TwitterTypeahead.prefetch("rocks", List("red rocks", "blue rocks", "green rocks"), Empty, (s:
+    String) => { Noop })
   }
 }
-

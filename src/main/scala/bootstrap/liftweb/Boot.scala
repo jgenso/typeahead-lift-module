@@ -1,5 +1,7 @@
 package bootstrap.liftweb
 
+import code.lib._
+
 import net.liftweb._
 import util._
 import Helpers._
@@ -10,7 +12,7 @@ import sitemap._
 import Loc._
 import net.liftmodules.JQueryModule
 import net.liftweb.http.js.jquery._
-
+import net.liftmodules.TwitterTypeahead
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -20,6 +22,8 @@ class Boot {
   def boot {
     // where to search snippet
     LiftRules.addToPackages("code")
+
+    TwitterTypeahead.init()
 
     // Build SiteMap
     val entries = List(
