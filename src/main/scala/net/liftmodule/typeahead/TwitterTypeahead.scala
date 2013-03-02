@@ -25,10 +25,10 @@ case class TypeaheadOptions(
 {
   def toJson(id: String) = {
     val json =
-      ("name" -> name) ~ 
+     ( ("name" -> name) ~ 
       ("local" -> JArray(local map { JString(_) }))  ~
       ("prefetch" -> JString(prefetch map { _(id) } openOr "" )) ~
-      ("remote" -> JString(remote map { _(id) } openOr "" ))
+      ("remote" -> JString(remote map { _(id) } openOr "" )) )
  
     // Filter out any options that weren't set. This probably isn't
     // the best way to handle this but it works
@@ -42,7 +42,33 @@ case class TypeaheadOptions(
 
 object TwitterTypeahead {
 
-  case class URL(attribute: String, url: String => String)
+  def local(name: String, candidates: List[String], deflt: Box[String],
+    f: String => JsCmd, attrs: ElemAttr*) = {
+    
+    val options = TypeaheadOptions(name, candidates, Empty, Empty)
+    typeahead(name, candidates, deflt, f, options, attrs: _*)
+  }
+
+  def prefetch(name: String, candidates: List[String], deflt: Box[String],
+    f: String => JsCmd, attrs: ElemAttr*) = {
+    
+    val options = TypeaheadOptions(name, Nil, Full(prefetchUrl), Empty)
+    typeahead(name, candidates, deflt, f, options, attrs: _*)
+  }
+  
+  def remote(name: String, candidates: List[String], deflt: Box[String],
+    f: String => JsCmd, attrs: ElemAttr*) = {
+
+    val options = TypeaheadOptions(name, Nil, Empty, Full(remoteUrl))
+    typeahead(name, candidates, deflt, f, options, attrs: _*)
+  }
+  
+  def remoteWithPrefetch(name: String, candidates: List[String], deflt: Box[String],
+    f: String => JsCmd, attrs: ElemAttr*) = {
+    
+    val options = TypeaheadOptions(name, Nil, Full(prefetchUrl), Full(remoteUrl))
+    typeahead(name, candidates, deflt, f, options, attrs: _*)
+  }
 
   private val _url = "/twitter/typeahead/%s/%s%s"
  
@@ -52,59 +78,29 @@ object TwitterTypeahead {
 
   private val remoteUrl = makeUrl("remote", Full("/%QUERY")) _ 
 
-  private def script(id: String, options: JValue) = 
+  private def script(id: String, options: JValue) = { 
      JsRaw("""
       (function($) {
-        $('#%s').typeahead([ %s ]);
+        $('#%s').typeahead( %s );
       })(jQuery);
      """.format(id, compact(render(options)))
     )
+  }
 
-  def h(name: String, candidates: List[String], deflt: Box[String],
+  private def typeahead(name: String, candidates: List[String], deflt: Box[String],
     f: String => JsCmd, options: TypeaheadOptions, attrs: ElemAttr*) = {
  
     val id = discoverId(attrs: _*)
-    val attributes = addIdIfNeeded(id, attrs: _*)
-    val s = script(id, options.toJson(id)) 
+    val atts = addIdIfNeeded(id, attrs: _*)
+    val attributes = placeholder(name, atts: _*)
+    val typescript = script(id, options.toJson(id)) 
     
     TypeaheadSuggestions.register(id, candidates)
     
-    _render(deflt, s, f, attributes: _*)
-  }
-
-  def local(name: String, candidates: List[String], deflt: Box[String],
-    f: String => JsCmd, attrs: ElemAttr*) = {
-    
-    val options = TypeaheadOptions(name, candidates, Empty, Empty)
-    h(name, candidates, deflt, f, options, attrs: _*)
-  }
-
-  def prefetch(name: String, candidates: List[String], deflt: Box[String],
-    f: String => JsCmd, attrs: ElemAttr*) = {
-    
-    val options = TypeaheadOptions(name, Nil, Full(prefetchUrl), Empty)
-    h(name, candidates, deflt, f, options, attrs: _*)
-  }
-  
-  def remote(name: String, candidates: List[String], deflt: Box[String],
-    f: String => JsCmd, attrs: ElemAttr*) = {
-
-    val options = TypeaheadOptions(name, Nil, Empty, Full(remoteUrl))
-    h(name, candidates, deflt, f, options, attrs: _*)
-  }
-  
-  def remoteWithPrefetch(name: String, candidates: List[String], deflt: Box[String],
-    f: String => JsCmd, attrs: ElemAttr*) = {
-    
-    val options = TypeaheadOptions(name, Nil, Full(prefetchUrl), Full(remoteUrl))
-    h(name, candidates, deflt, f, options, attrs: _*)
-  }
-
-  private def _render(deflt: Box[String], script: JsRaw, f: String => JsCmd, attrs: ElemAttr*) = {
     <head_merge>
-      { Script(OnLoad(script)) }
+      { Script(OnLoad(typescript)) }
     </head_merge> ++
-    SHtml.text(deflt openOr "", f, attrs: _*)
+    SHtml.text(deflt openOr "", f, attributes: _*)
   }
 
   private def discoverId(attrs: ElemAttr*): String = {
@@ -118,4 +114,9 @@ object TwitterTypeahead {
     if (attrs.contains(idElem)) attrs 
     else idElem +: attrs
   }
+  
+  private def placeholder(name: String, attrs: ElemAttr*) = {
+    BasicElemAttr("placeholder", name) +: attrs
+  }
+
 }
