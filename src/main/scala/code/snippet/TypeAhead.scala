@@ -22,6 +22,6 @@ class TypeAhead {
 
     "@local *" #> TwitterTypeahead.local("colors", local, Empty, s =>  Noop)  &
     "@prefetch *" #> TwitterTypeahead.prefetch("countries", prefetch, Empty, s =>  Noop) &
-    "@remote *" #> TwitterTypeahead.remote("foo", remote, Empty, s =>  Noop)
+    "@remote *" #> TwitterTypeahead.remote("foo bar baz", remote, Empty, s =>  Noop)
   }
 }
